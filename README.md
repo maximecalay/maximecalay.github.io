@@ -1,2 +1,2 @@
-# lectodys.github.io
-Lecteur avec IA pour personnes dyslexiques
+# LectoDys
+Lecteur pour personnes dyslexiques basé sur la reconnaissance de texte propulsée par IA
