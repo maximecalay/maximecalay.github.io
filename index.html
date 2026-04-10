@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4A90D9">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="LectoDys - Assistant de lecture pour la dyslexie">
+    <title>LectoDys</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- ===== ÉCRAN D'ACCUEIL ===== -->
+    <div id="screen-home" class="screen active">
+        <header>
+            <h1>📖 LectoDys</h1>
+            <p class="subtitle">Ton assistant de lecture</p>
+            <button id="btn-settings" class="btn-icon" aria-label="Réglages" title="Réglages">⚙️</button>
+        </header>
+
+        <main class="home-actions">
+            <label for="camera-input" class="btn btn-primary btn-large" id="btn-camera-label">
+                📷 Photographier le document
+            </label>
+            <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
+
+            <label for="file-input" class="btn btn-secondary btn-large" id="btn-file-label">
+                📁 Choisir une image
+            </label>
+            <input type="file" id="file-input" accept="image/*" hidden>
+
+            <button id="btn-paste" class="btn btn-secondary btn-large">
+                📋 Coller du texte
+            </button>
+
+            <button id="btn-demo" class="btn btn-outline btn-large">
+                🎯 Essayer la démo
+            </button>
+        </main>
+
+        <footer>
+            <p class="hint">Prends en photo ta feuille, je te la lis !</p>
+        </footer>
+    </div>
+
+    <!-- ===== ÉCRAN APERÇU IMAGE ===== -->
+    <div id="screen-preview" class="screen">
+        <header>
+            <button class="btn-back" id="btn-back-preview">← Retour</button>
+            <h2>Aperçu</h2>
+        </header>
+
+        <main class="preview-content">
+            <div class="image-container">
+                <img id="preview-image" alt="Aperçu du document" />
+                <canvas id="preview-canvas" hidden></canvas>
+            </div>
+
+            <div class="preview-options">
+                <label class="toggle-label">
+                    <input type="checkbox" id="toggle-enhance" checked>
+                    <span>Améliorer la qualité</span>
+                </label>
+            </div>
+
+            <button id="btn-extract" class="btn btn-primary btn-large">
+                🤖 Extraire le texte
+            </button>
+        </main>
+    </div>
+
+    <!-- ===== ÉCRAN CHARGEMENT ===== -->
+    <div id="screen-loading" class="screen">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p id="loading-message">Lecture du document en cours...</p>
+            <p class="hint">L'IA analyse ta photo</p>
+        </div>
+    </div>
+
+    <!-- ===== ÉCRAN LECTURE ===== -->
+    <div id="screen-reader" class="screen">
+        <header>
+            <button class="btn-back" id="btn-back-reader">← Nouveau</button>
+            <h2>Lecture</h2>
+            <button id="btn-copy-text" class="btn-icon" aria-label="Copier le texte" title="Copier le texte">📋</button>
+        </header>
+
+        <main class="reader-content">
+            <div id="text-display" class="text-display" aria-live="polite"></div>
+        </main>
+
+        <footer class="reader-controls">
+            <div class="speed-control">
+                <label for="speed-slider">🐢</label>
+                <input type="range" id="speed-slider" min="0.5" max="2" step="0.1" value="0.9">
+                <label for="speed-slider">🐇</label>
+                <span id="speed-value">0.9×</span>
+            </div>
+
+            <div class="playback-buttons">
+                <button id="btn-restart" class="btn btn-secondary" title="Reprendre au début">⏮️</button>
+                <button id="btn-play" class="btn btn-primary btn-play" title="Lire / Pause">▶️ Lire</button>
+                <button id="btn-stop" class="btn btn-secondary" title="Arrêter">⏹️</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ===== ÉCRAN COLLER DU TEXTE ===== -->
+    <div id="screen-paste" class="screen">
+        <header>
+            <button class="btn-back" id="btn-back-paste">← Retour</button>
+            <h2>Coller du texte</h2>
+        </header>
+
+        <main class="paste-content">
+            <textarea id="paste-textarea" placeholder="Colle ou tape ton texte ici..." rows="10"></textarea>
+            <button id="btn-read-pasted" class="btn btn-primary btn-large">
+                🔊 Lire ce texte
+            </button>
+        </main>
+    </div>
+
+    <!-- ===== ÉCRAN RÉGLAGES ===== -->
+    <div id="screen-settings" class="screen">
+        <header>
+            <button class="btn-back" id="btn-back-settings">← Retour</button>
+            <h2>⚙️ Réglages</h2>
+        </header>
+
+        <main class="settings-content">
+            <section class="settings-group">
+                <h3>🤖 Extraction du texte</h3>
+
+                <div class="setting-item">
+                    <label for="ocr-method">Méthode :</label>
+                    <select id="ocr-method">
+                        <option value="openai" selected>IA Vision (recommandé)</option>
+                        <option value="tesseract">Hors-ligne (Tesseract)</option>
+                    </select>
+                </div>
+
+                <div class="setting-item" id="api-key-group">
+                    <label for="api-key">Clé API OpenAI :</label>
+                    <input type="password" id="api-key" placeholder="sk-...">
+                    <p class="hint">Nécessaire pour le mode IA Vision. <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">Obtenir une clé</a></p>
+                </div>
+            </section>
+
+            <section class="settings-group">
+                <h3>🔊 Voix</h3>
+
+                <div class="setting-item">
+                    <label for="tts-method">Type de voix :</label>
+                    <select id="tts-method">
+                        <option value="browser">Voix du navigateur</option>
+                        <option value="openai-tts">Voix IA (naturelle) — nécessite clé API</option>
+                    </select>
+                </div>
+
+                <div class="setting-item" id="browser-voice-group">
+                    <label for="voice-select">Voix française :</label>
+                    <select id="voice-select">
+                        <option value="">Chargement...</option>
+                    </select>
+                </div>
+
+                <div class="setting-item" id="openai-voice-group" style="display:none;">
+                    <label for="openai-voice">Voix IA :</label>
+                    <select id="openai-voice">
+                        <option value="nova">Nova (féminine, douce)</option>
+                        <option value="alloy">Alloy (neutre)</option>
+                        <option value="echo">Echo (masculine)</option>
+                        <option value="fable">Fable (narrative)</option>
+                        <option value="shimmer">Shimmer (féminine, claire)</option>
+                        <option value="onyx">Onyx (masculine, grave)</option>
+                    </select>
+                    <p class="hint">Voix naturelle et fluide via OpenAI. Coût : ~0,01€ par lecture.</p>
+                </div>
+
+                <div class="setting-item">
+                    <label for="default-speed">Vitesse par défaut :</label>
+                    <input type="range" id="default-speed" min="0.5" max="2" step="0.1" value="0.9">
+                    <span id="default-speed-value">0.9×</span>
+                </div>
+            </section>
+
+            <section class="settings-group">
+                <h3>👁️ Affichage</h3>
+
+                <div class="setting-item">
+                    <label for="font-size">Taille du texte :</label>
+                    <input type="range" id="font-size" min="18" max="40" step="2" value="24">
+                    <span id="font-size-value">24px</span>
+                </div>
+
+                <label class="toggle-label">
+                    <input type="checkbox" id="toggle-dyslexic-font" checked>
+                    <span>Police OpenDyslexic</span>
+                </label>
+
+                <label class="toggle-label">
+                    <input type="checkbox" id="toggle-syllables">
+                    <span>Découper en syllabes</span>
+                </label>
+
+                <label class="toggle-label">
+                    <input type="checkbox" id="toggle-line-spacing" checked>
+                    <span>Interligne large</span>
+                </label>
+            </section>
+
+            <section class="settings-group">
+                <h3>🎨 Couleurs</h3>
+                <div class="setting-item">
+                    <label for="highlight-color">Couleur de surlignage :</label>
+                    <select id="highlight-color">
+                        <option value="#FFE082">Jaune (défaut)</option>
+                        <option value="#A5D6A7">Vert</option>
+                        <option value="#90CAF9">Bleu</option>
+                        <option value="#CE93D8">Violet</option>
+                        <option value="#FFAB91">Orange</option>
+                    </select>
+                </div>
+
+                <label class="toggle-label">
+                    <input type="checkbox" id="toggle-dark-mode">
+                    <span>Mode sombre</span>
+                </label>
+            </section>
+
+            <button id="btn-save-settings" class="btn btn-primary btn-large">
+                💾 Enregistrer
+            </button>
+        </main>
+    </div>
+
+    <!-- Tesseract.js (mode hors-ligne) -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
